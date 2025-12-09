@@ -1,0 +1,1140 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حل‌کننده برنامه‌ریزی خطی - روش سیمپلکس تجدیدنظرشده با M بزرگ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      startup: {
+        ready: () => {
+          MathJax.startup.defaultReady();
+        }
+      }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary-color: #1a365d;
+            --secondary-color: #2b6cb0;
+            --success-color: #276749;
+            --warning-color: #c05621;
+            --danger-color: #c53030;
+            --light-bg: #f7fafc;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --math-bg: #fffef0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .app-header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+        
+        .app-header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .app-header p {
+            color: #6c757d;
+            margin-bottom: 0;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 25px;
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            padding: 15px 20px;
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 25px;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 10px 15px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, var(--success-color), #219a52);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        
+        .input-table {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .input-table table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 5px;
+        }
+        
+        .input-table th {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .input-table td {
+            padding: 5px;
+        }
+        
+        .input-table input {
+            width: 80px;
+            text-align: center;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 8px;
+            direction: ltr;
+        }
+        
+        .input-table select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            padding: 8px;
+        }
+        
+        /* Handwritten Style Derivation */
+        .derivation-page {
+            background: white;
+            border-radius: 15px;
+            padding: 30px 40px;
+            margin-bottom: 25px;
+            box-shadow: var(--card-shadow);
+            border-top: 5px solid var(--secondary-color);
+        }
+        
+        .iteration-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .iteration-header h3 {
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .iteration-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .math-block {
+            background: var(--math-bg);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px 25px;
+            margin: 15px 0;
+            direction: ltr;
+            unicode-bidi: isolate;
+            text-align: center;
+            overflow-x: auto;
+        }
+        
+        .math-block.highlight {
+            border-color: var(--secondary-color);
+            background: #ebf8ff;
+        }
+        
+        .math-block.success {
+            border-color: var(--success-color);
+            background: #f0fff4;
+        }
+        
+        .math-block.warning {
+            border-color: var(--warning-color);
+            background: #fffaf0;
+        }
+        
+        .step-box {
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            border-right: 4px solid var(--secondary-color);
+        }
+        
+        .step-title {
+            color: var(--secondary-color);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .step-number {
+            background: var(--secondary-color);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        
+        .explanation-text {
+            color: #4a5568;
+            line-height: 1.9;
+            text-align: justify;
+            margin: 10px 0;
+        }
+        
+        .var-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        
+        .var-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 8px;
+            direction: ltr;
+        }
+        
+        .ratio-table {
+            width: 100%;
+            max-width: 500px;
+            margin: 15px auto;
+            border-collapse: collapse;
+            direction: ltr;
+        }
+        
+        .ratio-table th, .ratio-table td {
+            border: 2px solid #e2e8f0;
+            padding: 10px 15px;
+            text-align: center;
+        }
+        
+        .ratio-table th {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .ratio-table tr.selected {
+            background: #c6f6d5;
+        }
+        
+        .ratio-table tr.invalid {
+            background: #fed7d7;
+            color: #9b2c2c;
+        }
+        
+        .matrices-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .matrix-box {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px 20px;
+            text-align: center;
+            direction: ltr;
+            unicode-bidi: isolate;
+        }
+
+        .matrix-label {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            direction: rtl;
+            unicode-bidi: embed;
+        }
+        
+        .result-box {
+            background: linear-gradient(135deg, var(--success-color), #38a169);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 25px;
+        }
+        
+        .result-box h3 {
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+        
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+        
+        .result-vars {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .result-var {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+        }
+        
+        .unbounded-box {
+            background: linear-gradient(135deg, var(--danger-color), #e53e3e);
+        }
+        
+        .infeasible-box {
+            background: linear-gradient(135deg, var(--warning-color), #dd6b20);
+        }
+        
+        .arrow {
+            color: var(--secondary-color);
+            font-weight: bold;
+            margin: 0 8px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        
+        .loading.active {
+            display: block;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e9ecef;
+            border-top-color: var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .example-btn {
+            background: linear-gradient(135deg, #ed8936, #dd6b20);
+            border: none;
+            border-radius: 10px;
+            padding: 8px 20px;
+            font-weight: 600;
+            color: white;
+            margin: 5px;
+        }
+        
+        .example-btn:hover {
+            background: linear-gradient(135deg, #dd6b20, #c05621);
+            color: white;
+        }
+        
+        .optimal-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-right: 10px;
+        }
+        
+        .entering-var {
+            background: #c6f6d5;
+            border: 2px solid var(--success-color);
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        
+        .leaving-var {
+            background: #fed7d7;
+            border: 2px solid var(--danger-color);
+            padding: 3px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .derivation-page {
+                padding: 20px;
+            }
+            
+            .matrices-row {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-container">
+        <!-- Header -->
+        <div class="app-header">
+            <h1>📐 حل‌کننده برنامه‌ریزی خطی</h1>
+            <p>روش سیمپلکس تجدیدنظرشده (Revised Simplex Method) با M بزرگ</p>
+            <p style="margin-top:15px;">
+                <a href="https://or344.github.io/symplex/two_phase.html" style="display:inline-block;background:linear-gradient(135deg, #667eea 0%, #764ba2 100%);color:white;padding:12px 25px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:10px;">
+                    🔄 حل‌کننده دو فازی
+                </a>
+            </p>
+        </div>
+
+        <!-- Step 1: Problem Size -->
+        <div class="card" id="sizeCard">
+            <div class="card-header">
+                مرحله اول: تعیین ابعاد مسئله
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">تعداد متغیرهای تصمیم:</label>
+                        <input type="number" class="form-control" id="numVars" min="1" max="10" value="2">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">تعداد محدودیت‌ها:</label>
+                        <input type="number" class="form-control" id="numConstraints" min="1" max="10" value="2">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">نوع بهینه‌سازی:</label>
+                        <select class="form-select" id="optType">
+                            <option value="max">بیشینه‌سازی (Maximize)</option>
+                            <option value="min">کمینه‌سازی (Minimize)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-4 text-center">
+                    <button class="btn btn-primary" onclick="generateInputForm()">ایجاد فرم ورودی</button>
+                    <button class="example-btn" onclick="loadExample1()">مثال ۱</button>
+                    <button class="example-btn" onclick="loadExample2()">مثال ۲ (با ≥)</button>
+                    <button class="example-btn" onclick="loadExample3()">مثال ۳ (Z=1350)</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Input Form -->
+        <div class="card" id="inputCard" style="display: none;">
+            <div class="card-header">
+                مرحله دوم: ورود ضرایب مسئله
+            </div>
+            <div class="card-body">
+                <div id="objectiveSection" class="mb-4">
+                    <h5 class="text-primary mb-3">تابع هدف:</h5>
+                    <div class="input-table" id="objectiveTable"></div>
+                </div>
+                <div id="constraintsSection">
+                    <h5 class="text-primary mb-3">محدودیت‌ها:</h5>
+                    <div class="input-table" id="constraintsTable"></div>
+                </div>
+                <div class="mt-4 text-center">
+                    <button class="btn btn-success" onclick="solveProblem()">حل مسئله</button>
+                    <button class="btn btn-secondary" onclick="resetForm()">شروع مجدد</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loadingSection">
+            <div class="spinner"></div>
+            <p>در حال محاسبه...</p>
+        </div>
+
+        <!-- Results -->
+        <div id="resultsSection"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ==================== Constants ====================
+        const EPSILON = 1e-9;
+        const M_VALUE = 1000000;  // عدد بزرگ M برای جریمه متؾیرهای مصنوعی
+
+        // ==================== Helper Functions ====================
+        function formatNum(num, precision = 4) {
+            const fracs = [[1/2,"\\frac{1}{2}"],[1/3,"\\frac{1}{3}"],[2/3,"\\frac{2}{3}"],
+                          [1/4,"\\frac{1}{4}"],[3/4,"\\frac{3}{4}"],[1/5,"\\frac{1}{5}"],
+                          [2/5,"\\frac{2}{5}"],[3/5,"\\frac{3}{5}"],[4/5,"\\frac{4}{5}"],
+                          [1/6,"\\frac{1}{6}"],[5/6,"\\frac{5}{6}"]];
+
+            const basicFormat = (x) => {
+                if (Math.abs(x) < EPSILON) return "0";
+                if (Math.abs(x - Math.round(x)) < EPSILON) return Math.round(x).toString();
+                for (const [v, l] of fracs) {
+                    if (Math.abs(Math.abs(x) - v) < EPSILON) return x < 0 ? "-" + l : l;
+                }
+                return x.toFixed(precision).replace(/\.?0+$/, "");
+            };
+
+            if (Math.abs(num) < EPSILON) return "0";
+
+            // Smart Big-M rendering - همیشه اعداد بزرگ را به‌صورت M نمایش بده
+            const m = M_VALUE;
+            const absNum = Math.abs(num);
+            
+            // اگر عدد بزرگتر از نصف M است، حتما شامل M است
+            if (absNum > m * 0.5) {
+                const kFloat = num / m;
+                const k = Math.round(kFloat);
+                const remainder = num - k * m;
+                const absRemainder = Math.abs(remainder);
+                
+                // اگر باقیمانده خیلی کوچک است
+                if (absRemainder < m * 0.01) {
+                    if (k === 1) return "M";
+                    if (k === -1) return "-M";
+                    return k + "M";
+                }
+                
+                // اگر باقیمانده قابل نمایش است
+                if (absRemainder < m * 0.5) {
+                    const base = k === 1 ? "M" : (k === -1 ? "-M" : k + "M");
+                    const remStr = basicFormat(Math.abs(remainder));
+                    const sign = remainder > 0 ? " + " : " - ";
+                    return base + sign + remStr;
+                }
+            }
+
+            // در غیر این صورت، عدد معمولی است
+            return basicFormat(num);
+        }
+
+        function mat2latex(mat) {
+            let s = "\\begin{bmatrix}";
+            for (let i = 0; i < mat.length; i++) {
+                s += mat[i].map(v => formatNum(v)).join(" & ");
+                if (i < mat.length - 1) s += " \\\\ ";
+            }
+            return s + "\\end{bmatrix}";
+        }
+
+        function vec2latex(vec) {
+            return "\\begin{bmatrix}" + vec.map(v => formatNum(v)).join(" \\\\ ") + "\\end{bmatrix}";
+        }
+
+        function rowVec2latex(vec) {
+            return "\\begin{bmatrix}" + vec.map(v => formatNum(v)).join(" & ") + "\\end{bmatrix}";
+        }
+
+        function extractCols(A, indices) {
+            return A.map(row => indices.map(j => row[j]));
+        }
+
+        function getCol(A, j) {
+            return A.map(row => row[j]);
+        }
+
+        // ==================== Global Variables ====================
+        let numVars = 0;
+        let numConstraints = 0;
+        let optType = 'max';
+
+        // ==================== UI Functions ====================
+        function generateInputForm() {
+            numVars = parseInt(document.getElementById('numVars').value);
+            numConstraints = parseInt(document.getElementById('numConstraints').value);
+            optType = document.getElementById('optType').value;
+
+            if (numVars < 1 || numConstraints < 1) {
+                alert('لطفاً مقادیر معتبر وارد کنید.');
+                return;
+            }
+
+            let objHTML = '<table style="direction:ltr;"><tr>';
+            objHTML += `<th>${optType === 'max' ? 'Max' : 'Min'} Z =</th>`;
+            for (let j = 0; j < numVars; j++) objHTML += `<th>x<sub>${j+1}</sub></th>`;
+            objHTML += '</tr><tr><td></td>';
+            for (let j = 0; j < numVars; j++) objHTML += `<td><input type="number" step="any" id="c_${j}" value="0"></td>`;
+            objHTML += '</tr></table>';
+            document.getElementById('objectiveTable').innerHTML = objHTML;
+
+            let conHTML = '<table style="direction:ltr;"><tr><th>محدودیت</th>';
+            for (let j = 0; j < numVars; j++) conHTML += `<th>x<sub>${j+1}</sub></th>`;
+            conHTML += '<th>نوع</th><th>b</th></tr>';
+            for (let i = 0; i < numConstraints; i++) {
+                conHTML += `<tr><td>${i+1}</td>`;
+                for (let j = 0; j < numVars; j++) conHTML += `<td><input type="number" step="any" id="a_${i}_${j}" value="0"></td>`;
+                conHTML += `<td><select id="sign_${i}"><option value="le">≤</option><option value="ge">≥</option><option value="eq">=</option></select></td>`;
+                conHTML += `<td><input type="number" step="any" id="b_${i}" value="0"></td></tr>`;
+            }
+            conHTML += '</table>';
+            document.getElementById('constraintsTable').innerHTML = conHTML;
+            document.getElementById('inputCard').style.display = 'block';
+            document.getElementById('resultsSection').innerHTML = '';
+        }
+
+        function loadExample1() {
+            document.getElementById('numVars').value = 2;
+            document.getElementById('numConstraints').value = 3;
+            document.getElementById('optType').value = 'max';
+            generateInputForm();
+            document.getElementById('c_0').value = 3;
+            document.getElementById('c_1').value = 5;
+            document.getElementById('a_0_0').value = 1; document.getElementById('a_0_1').value = 0;
+            document.getElementById('sign_0').value = 'le'; document.getElementById('b_0').value = 4;
+            document.getElementById('a_1_0').value = 0; document.getElementById('a_1_1').value = 2;
+            document.getElementById('sign_1').value = 'le'; document.getElementById('b_1').value = 12;
+            document.getElementById('a_2_0').value = 3; document.getElementById('a_2_1').value = 2;
+            document.getElementById('sign_2').value = 'le'; document.getElementById('b_2').value = 18;
+        }
+
+        function loadExample2() {
+            document.getElementById('numVars').value = 2;
+            document.getElementById('numConstraints').value = 3;
+            document.getElementById('optType').value = 'min';
+            generateInputForm();
+            document.getElementById('c_0').value = 4; document.getElementById('c_1').value = 1;
+            document.getElementById('a_0_0').value = 3; document.getElementById('a_0_1').value = 1;
+            document.getElementById('sign_0').value = 'eq'; document.getElementById('b_0').value = 3;
+            document.getElementById('a_1_0').value = 4; document.getElementById('a_1_1').value = 3;
+            document.getElementById('sign_1').value = 'ge'; document.getElementById('b_1').value = 6;
+            document.getElementById('a_2_0').value = 1; document.getElementById('a_2_1').value = 2;
+            document.getElementById('sign_2').value = 'le'; document.getElementById('b_2').value = 4;
+        }
+
+        function loadExample3() {
+            document.getElementById('numVars').value = 3;
+            document.getElementById('numConstraints').value = 3;
+            document.getElementById('optType').value = 'max';
+            generateInputForm();
+            document.getElementById('c_0').value = 3; document.getElementById('c_1').value = 2; document.getElementById('c_2').value = 5;
+            document.getElementById('a_0_0').value = 1; document.getElementById('a_0_1').value = 2; document.getElementById('a_0_2').value = 1;
+            document.getElementById('sign_0').value = 'le'; document.getElementById('b_0').value = 430;
+            document.getElementById('a_1_0').value = 3; document.getElementById('a_1_1').value = 0; document.getElementById('a_1_2').value = 2;
+            document.getElementById('sign_1').value = 'le'; document.getElementById('b_1').value = 460;
+            document.getElementById('a_2_0').value = 1; document.getElementById('a_2_1').value = 4; document.getElementById('a_2_2').value = 0;
+            document.getElementById('sign_2').value = 'le'; document.getElementById('b_2').value = 420;
+        }
+
+        function resetForm() {
+            document.getElementById('inputCard').style.display = 'none';
+            document.getElementById('resultsSection').innerHTML = '';
+        }
+
+        // ==================== Main Solver ====================
+        function solveProblem() {
+            document.getElementById('loadingSection').classList.add('active');
+            document.getElementById('resultsSection').innerHTML = '';
+            
+            setTimeout(() => {
+                try {
+                    const result = runRevisedSimplex();
+                    document.getElementById('resultsSection').innerHTML = result;
+                    MathJax.typesetPromise();
+                } catch (error) {
+                    document.getElementById('resultsSection').innerHTML = `<div class="alert alert-danger"><strong>خطا:</strong> ${error.message}</div>`;
+                    console.error(error);
+                }
+                document.getElementById('loadingSection').classList.remove('active');
+            }, 100);
+        }
+
+        function runRevisedSimplex() {
+            let html = '';
+            
+            // Read inputs
+            const c_orig = [];
+            for (let j = 0; j < numVars; j++) c_orig.push(parseFloat(document.getElementById(`c_${j}`).value) || 0);
+            
+            const A_orig = [], b_orig = [], signs = [];
+            for (let i = 0; i < numConstraints; i++) {
+                const row = [];
+                for (let j = 0; j < numVars; j++) row.push(parseFloat(document.getElementById(`a_${i}_${j}`).value) || 0);
+                A_orig.push(row);
+                b_orig.push(parseFloat(document.getElementById(`b_${i}`).value) || 0);
+                signs.push(document.getElementById(`sign_${i}`).value);
+            }
+
+            // ========== Problem Formulation ==========
+            html += '<div class="derivation-page">';
+            html += '<div class="iteration-header"><h3>📋 فرمول‌بندی مسئله</h3></div>';
+            
+            html += '<div class="step-box">';
+            html += '<div class="step-title">مسئله برنامه‌ریزی خطی اصلی:</div>';
+            html += '<div class="math-block">$$' + (optType === 'max' ? '\\text{Max } Z = ' : '\\text{Min } Z = ');
+            html += c_orig.map((c,j) => (c >= 0 && j > 0 ? '+' : '') + formatNum(c) + `x_{${j+1}}`).join('');
+            html += '$$</div>';
+            
+            html += '<div class="math-block">$$\\text{Subject to:}$$';
+            for (let i = 0; i < numConstraints; i++) {
+                html += '$$' + A_orig[i].map((a,j) => (a >= 0 && j > 0 ? '+' : '') + formatNum(a) + `x_{${j+1}}`).join('');
+                html += (signs[i] === 'le' ? ' \\le ' : signs[i] === 'ge' ? ' \\ge ' : ' = ') + formatNum(b_orig[i]) + '$$';
+            }
+            html += '$$x_j \\ge 0, \\quad \\forall j$$</div>';
+            html += '</div></div>';
+
+            // ========== Standard Form Conversion ==========
+            const isMin = optType === 'min';
+            let c = isMin ? c_orig.map(x => -x) : [...c_orig];
+            const A = A_orig.map(r => [...r]);
+            const b = [...b_orig];
+            
+            for (let i = 0; i < numConstraints; i++) {
+                if (b[i] < 0) {
+                    b[i] = -b[i];
+                    A[i] = A[i].map(x => -x);
+                    signs[i] = signs[i] === 'le' ? 'ge' : signs[i] === 'ge' ? 'le' : 'eq';
+                }
+            }
+            
+            const varNames = [];
+            for (let j = 0; j < numVars; j++) varNames.push(`x_{${j+1}}`);
+            
+            let slackCnt = 0, surplusCnt = 0, artificialCnt = 0;
+            const artificialIdx = [], basisIdx = [];
+            
+            for (let i = 0; i < numConstraints; i++) {
+                if (signs[i] === 'le') {
+                    slackCnt++;
+                    varNames.push(`s_{${slackCnt}}`);
+                    c.push(0);
+                    for (let k = 0; k < numConstraints; k++) A[k].push(k === i ? 1 : 0);
+                    basisIdx.push(c.length - 1);
+                } else if (signs[i] === 'ge') {
+                    surplusCnt++;
+                    varNames.push(`e_{${surplusCnt}}`);
+                    c.push(0);
+                    for (let k = 0; k < numConstraints; k++) A[k].push(k === i ? -1 : 0);
+                    artificialCnt++;
+                    varNames.push(`a_{${artificialCnt}}`);
+                    c.push(-M_VALUE);
+                    for (let k = 0; k < numConstraints; k++) A[k].push(k === i ? 1 : 0);
+                    artificialIdx.push(c.length - 1);
+                    basisIdx.push(c.length - 1);
+                } else {
+                    artificialCnt++;
+                    varNames.push(`a_{${artificialCnt}}`);
+                    c.push(-M_VALUE);
+                    for (let k = 0; k < numConstraints; k++) A[k].push(k === i ? 1 : 0);
+                    artificialIdx.push(c.length - 1);
+                    basisIdx.push(c.length - 1);
+                }
+            }
+            
+            const totalVars = c.length;
+
+            // Display Standard Form
+            html += '<div class="derivation-page">';
+            html += '<div class="iteration-header"><h3>📐 تبدیل به فرم استاندارد</h3></div>';
+            
+            html += '<div class="step-box">';
+            html += '<p class="explanation-text">';
+            if (isMin) html += '• تبدیل کمینه‌سازی به بیشینه‌سازی<br>';
+            if (slackCnt > 0) html += `• افزودن ${slackCnt} متغیر کمکی (Slack: $s_i$) برای ≤<br>`;
+            if (surplusCnt > 0) {
+                html += `• افزودن ${surplusCnt} متغیر مازاد (Surplus: $e_i$) برای ≥<br>`;
+                html += '<div style="background:#e8f5e9;border-right:4px solid #4caf50;padding:10px;margin:8px 0;border-radius:5px;font-size:0.9rem;">';
+                html += '<strong>🔍 توضیح متغیر Surplus ($e_i$):</strong><br>';
+                html += 'برای محدودیت بزرگتر مساوی (≥) مثل $2x_1 + x_2 \\ge 10$، ما متغیر $e_i$ را کم می‌کنیم: ';
+                html += '$2x_1 + x_2 - e_1 = 10$. این متغیر نشان می‌دهد چقدر "مازاد" داریم. ';
+                html += 'اگر $e_1$ در تکرارها وارد پایه شود، یعنی مازاد داریم و محدودیت فعال نیست.';
+                html += '</div>';
+            }
+            if (artificialCnt > 0) {
+                html += `• افزودن ${artificialCnt} متغیر مصنوعی (Artificial: $a_i$) با روش Big-M<br>`;
+                html += '<div style="background:#fff3cd;border-right:4px solid #ffc107;padding:15px;margin:10px 0;border-radius:8px;">';
+                html += '<strong>💡 چرا روش M بزرگ؟</strong><br>';
+                html += `<strong>1. مشکل:</strong> برای محدودیت‌های ≥ و = نمی‌توانیم مستقیماً پایه اولیه پیدا کنیم.<br>`;
+                html += `<strong>2. حل:</strong> متغیرهای مصنوعی ($a_i$) اضافه می‌کنیم تا پایه اولیه داشته باشیم.<br>`;
+                html += `<strong>3. ضریب -M:</strong> به این متغیرها ضریب $-M$ (در تابع هدف) می‌دهیم که M = ${M_VALUE.toLocaleString()} عددی بسیار بزرگ است.<br>`;
+                html += '<strong>4. چرا بزرگ؟</strong> چون می‌خواهیم به الگوریتم بگوییم: "به هر قیمتی شده این متغیرها را صفر کن!"<br>';
+                html += '<strong>5. نتیجه:</strong> اگر در جواب نهایی $a_i > 0$ باشد → مسئله <strong>ناممکن (Infeasible)</strong> است چون حتی با جریمه سنگین هم نتوانستیم آنها را حذف کنیم.';
+                html += '</div>';
+            }
+            html += '</p>';
+            
+            html += '<div class="matrices-row">';
+            html += `<div class="matrix-box"><div class="matrix-label">ماتریس $A$</div>$$${mat2latex(A)}$$</div>`;
+            html += `<div class="matrix-box"><div class="matrix-label">بردار $b$</div>$$${vec2latex(b)}$$</div>`;
+            html += `<div class="matrix-box"><div class="matrix-label">بردار $C$</div>$$${rowVec2latex(c)}$$</div>`;
+            html += '</div>';
+            
+            html += '<div class="math-block">';
+            html += '<strong>متغیرها:</strong> $[' + varNames.join(', ') + ']$';
+            html += '</div></div></div>';
+
+            // ========== Simplex Iterations ==========
+            let iter = 0, maxIter = 50;
+            let optimal = false, unbounded = false, infeasible = false;
+            let basis = [...basisIdx];
+            let finalXB = null, finalZ = null;
+            
+            while (iter < maxIter && !optimal && !unbounded) {
+                iter++;
+                
+                const nonBasis = [];
+                for (let j = 0; j < totalVars; j++) if (!basis.includes(j)) nonBasis.push(j);
+                
+                // Extract matrices
+                const B_mat = extractCols(A, basis);
+                const N_mat = extractCols(A, nonBasis);
+                const C_B = basis.map(j => c[j]);
+                const C_N = nonBasis.map(j => c[j]);
+                
+                let B_inv;
+                try {
+                    B_inv = math.inv(B_mat);
+                } catch(e) {
+                    html += '<div class="alert alert-danger">ماتریس پایه منفرد است!</div>';
+                    break;
+                }
+                
+                // X_B = B^{-1} * b
+                const X_B = math.multiply(B_inv, b);
+                
+                // W = C_B * B^{-1}
+                const W = math.multiply(C_B, B_inv);
+                
+                // Reduced costs: C_N - W*N
+                const WN = math.multiply(W, N_mat);
+                const reducedCosts = C_N.map((cn, i) => cn - WN[i]);
+                
+                // Current Z
+                let Z_curr = math.dot(C_B, X_B);
+                if (isMin) Z_curr = -Z_curr;
+                
+                // ========== Iteration Output ==========
+                html += '<div class="derivation-page">';
+                html += `<div class="iteration-header"><h3>🔄 تکرار ${iter}</h3><span class="iteration-badge">Iteration ${iter}</span></div>`;
+                
+                // Define B and N
+                html += '<div class="step-box">';
+                html += '<div class="step-title"><span class="step-number">۱</span>تعریف ماتریس‌های پایه و غیرپایه</div>';
+                html += '<div class="matrices-row">';
+                html += `<div class="matrix-box"><div class="matrix-label">پایه $B$ (ستون‌های ${basis.map(i=>i+1).join(',')})</div>$$B = ${mat2latex(B_mat)}$$</div>`;
+                html += `<div class="matrix-box"><div class="matrix-label">غیرپایه $N$</div>$$N = ${mat2latex(N_mat)}$$</div>`;
+                html += '</div>';
+                html += '<div class="matrices-row">';
+                html += `<div class="matrix-box"><div class="matrix-label">$C_B$</div>$$C_B = ${rowVec2latex(C_B)}$$</div>`;
+                html += `<div class="matrix-box"><div class="matrix-label">$C_N$</div>$$C_N = ${rowVec2latex(C_N)}$$</div>`;
+                html += '</div>';
+                html += '<p class="explanation-text"><strong>متغیرهای پایه:</strong> $\\{' + basis.map(i => varNames[i]).join(', ') + '\\}$</p>';
+                html += '<p class="explanation-text"><strong>متغیرهای غیرپایه:</strong> $\\{' + nonBasis.map(i => varNames[i]).join(', ') + '\\}$</p>';
+                html += '</div>';
+                
+                // Compute B^{-1}
+                html += '<div class="step-box">';
+                html += '<div class="step-title"><span class="step-number">۲</span>محاسبه معکوس ماتریس پایه</div>';
+                html += '<div class="math-block highlight">';
+                html += `$$B \\rightarrow B^{-1} = ${mat2latex(B_inv)}$$`;
+                html += '</div></div>';
+                
+                // Compute X_B
+                html += '<div class="step-box">';
+                html += '<div class="step-title"><span class="step-number">۳</span>محاسبه مقادیر متغیرهای پایه ($X_B = B^{-1}b$)</div>';
+                html += '<div class="math-block">';
+                html += `$$X_B = B^{-1} \\cdot b = ${mat2latex(B_inv)} \\times ${vec2latex(b)} = ${vec2latex(X_B)}$$`;
+                html += '</div>';
+                html += '<div class="var-list">';
+                for (let i = 0; i < basis.length; i++) {
+                    html += `<div class="var-item">$${varNames[basis[i]]} = ${formatNum(X_B[i])}$</div>`;
+                }
+                html += '</div></div>';
+                
+                // Compute Reduced Costs
+                html += '<div class="step-box">';
+                html += '<div class="step-title"><span class="step-number">۴</span>محاسبه هزینه‌های کاهش‌یافته ($\\bar{C}_N = C_N - C_B B^{-1} N$)</div>';
+                
+                // توضیح اعداد بزرگ M
+                if (artificialCnt > 0 && iter === 1) {
+                    html += '<div style="background:#e3f2fd;border-right:4px solid #2196f3;padding:12px;margin:10px 0;border-radius:5px;font-size:0.95rem;">';
+                    html += `<strong>ℹ️ درباره اعداد بزرگ (${M_VALUE.toLocaleString()}):</strong><br>`;
+                    html += 'این اعداد مربوط به ضریب M در متغیرهای مصنوعی هستند. ';
+                    html += 'برای مثال اگر $C_B = [-1000000, 0]$ ببینید، یعنی متغیر مصنوعی در پایه است. ';
+                    html += '<strong>هدف:</strong> الگوریتم با دیدن این عدد منفی بزرگ، سریعاً متغیر دیگری را وارد پایه می‌کند تا Z را بهبود ببخشد.';
+                    html += '</div>';
+                }
+                
+                html += '<div class="math-block">';
+                html += `$$W = C_B \\cdot B^{-1} = ${rowVec2latex(C_B)} \\times ${mat2latex(B_inv)} = ${rowVec2latex(W)}$$`;
+                html += '</div>';
+                html += '<div class="math-block">';
+                html += `$$W \\cdot N = ${rowVec2latex(W)} \\times ${mat2latex(N_mat)} = ${rowVec2latex(WN)}$$`;
+                html += '</div>';
+                html += '<div class="math-block highlight">';
+                html += `$$\\bar{C}_N = C_N - W \\cdot N = ${rowVec2latex(C_N)} - ${rowVec2latex(WN)} = ${rowVec2latex(reducedCosts)}$$`;
+                html += '</div>';
+                html += '<div class="var-list">';
+                for (let i = 0; i < nonBasis.length; i++) {
+                    const rc = reducedCosts[i];
+                    const cls = rc > EPSILON ? 'style="background:#c6f6d5;border-color:#276749;"' : '';
+                    html += `<div class="var-item" ${cls}>$\\bar{C}_{${varNames[nonBasis[i]]}} = ${formatNum(rc)}$</div>`;
+                }
+                html += '</div></div>';
+                
+                // Optimality Check
+                html += '<div class="step-box">';
+                html += '<div class="step-title"><span class="step-number">۵</span>بررسی شرط بهینگی</div>';
+                
+                const positiveIdx = [];
+                for (let i = 0; i < reducedCosts.length; i++) {
+                    if (reducedCosts[i] > EPSILON) positiveIdx.push(i);
+                }
+                
+                if (positiveIdx.length === 0) {
+                    html += '<div class="math-block success">';
+                    html += '<p style="margin:0;font-size:1.1rem;font-weight:600;"><strong>✓ همه</strong> $\\bar{C}_j \\le 0$ <strong>→ جواب بهینه است!</strong></p>';
+                    html += '</div>';
+                    optimal = true;
+                    finalXB = X_B;
+                    finalZ = Z_curr;
+                    
+                    // Check artificial
+                    for (let i = 0; i < basis.length; i++) {
+                        if (artificialIdx.includes(basis[i]) && X_B[i] > EPSILON) {
+                            infeasible = true;
+                            html += '<div class="math-block warning"><p style="margin:0;font-size:1.1rem;font-weight:600;color:#d63031;"><strong>⚠ متغیر مصنوعی در پایه → مسئله نشدنی!</strong></p></div>';
+                            break;
+                        }
+                    }
+                    html += '</div></div>';
+                    break;
+                }
+                
+                // Find entering variable (max reduced cost)
+                let enterLocalIdx = positiveIdx[0];
+                for (const idx of positiveIdx) {
+                    if (reducedCosts[idx] > reducedCosts[enterLocalIdx]) enterLocalIdx = idx;
+                }
+                const enterGlobalIdx = nonBasis[enterLocalIdx];
+                
+                html += '<div class="math-block warning">';
+                html += '<p style="margin:0 0 8px 0;font-size:1.05rem;"><strong>$\\exists \\bar{C}_j > 0$ → ادامه بهینه‌سازی</strong></p>';
+                html += `<p style="margin:0 0 8px 0;"><strong>بیشترین:</strong> $\\bar{C}_{${varNames[enterGlobalIdx]}} = ${formatNum(reducedCosts[enterLocalIdx])}$</p>`;
+                html += `<div style="border:2px solid #27ae60;background-color:#d5f4e6;padding:10px;border-radius:5px;margin:8px 0;display:inline-block;"><strong>متغیر واردشونده:</strong> $${varNames[enterGlobalIdx]}$</div>`;
+                html += '</div></div>';
+                
+                // Compute direction d = B^{-1} * P_j
+                html += '<div class="step-box">';
+                html += '<div class="step-title"><span class="step-number">۶</span>محاسبه بردار جهت ($d = B^{-1} P_j$)</div>';
+                const P_enter = getCol(A, enterGlobalIdx);
+                const d = math.multiply(B_inv, P_enter);
+                html += '<div class="math-block">';
+                html += `$$P_{${varNames[enterGlobalIdx]}} = ${vec2latex(P_enter)}$$`;
+                html += `<p style="margin:8px 0 0 0;font-size:0.9rem;color:#666;">(ستون ${enterGlobalIdx+1} از $A$)</p>`;
+                html += '</div>';
+                html += '<div class="math-block highlight">';
+                html += `$$d = B^{-1} \\cdot P_{${varNames[enterGlobalIdx]}} = ${mat2latex(B_inv)} \\times ${vec2latex(P_enter)} = ${vec2latex(d)}$$`;
+                html += '</div></div>';
+                
+                // Ratio Test
+                html += '<div class="step-box">';
+                html += '<div class="step-title"><span class="step-number">۷</span>آزمون نسبت (Ratio Test)</div>';
+                html += '<div class="math-block">$$\\theta = \\min\\left\\{\\frac{X_{B_i}}{d_i} \\; | \\; d_i > 0\\right\\}$$</div>';
+                
+                const ratios = [];
+                for (let i = 0; i < numConstraints; i++) {
+                    if (d[i] > EPSILON) {
+                        ratios.push({idx: i, bVar: basis[i], xb: X_B[i], di: d[i], ratio: X_B[i] / d[i]});
+                    }
+                }
+                
+                if (ratios.length === 0) {
+                    html += '<div class="math-block" style="background:#fed7d7;border-color:#c53030;">';
+                    html += '<p style="margin:0;font-size:1.1rem;font-weight:600;color:#c53030;"><strong>⚠ همه</strong> $d_i \\le 0$ <strong>→ مسئله نامحدود!</strong></p>';
+                    html += '</div></div></div>';
+                    unbounded = true;
+                    break;
+                }
+                
+                // Find min ratio
+                let minRatioObj = ratios[0];
+                for (const r of ratios) {
+                    if (r.ratio < minRatioObj.ratio - EPSILON) minRatioObj = r;
+                }
+                
+                html += '<table class="ratio-table"><thead><tr><th>متغیر پایه</th><th>$X_{B_i}$</th><th>$d_i$</th><th>نسبت</th></tr></thead><tbody>';
+                for (let i = 0; i < numConstraints; i++) {
+                    const isValid = d[i] > EPSILON;
+                    const isMin = ratios.some(r => r.idx === i && r === minRatioObj);
+                    const cls = isMin ? 'selected' : (!isValid ? 'invalid' : '');
+                    html += `<tr class="${cls}">`;
+                    html += `<td>$${varNames[basis[i]]}$</td>`;
+                    html += `<td>$${formatNum(X_B[i])}$</td>`;
+                    html += `<td>$${formatNum(d[i])}$</td>`;
+                    if (isValid) {
+                        html += `<td>$\\frac{${formatNum(X_B[i])}}{${formatNum(d[i])}} = ${formatNum(X_B[i]/d[i])}$</td>`;
+                    } else {
+                        html += `<td>—</td>`;
+                    }
+                    html += '</tr>';
+                }
+                html += '</tbody></table>';
+                
+                html += '<div class="math-block success">';
+                html += `$$\\theta^* = ${formatNum(minRatioObj.ratio)}$$`;
+                html += `<div style="border:2px solid #e74c3c;background-color:#ffe6e6;padding:10px;border-radius:5px;margin:8px 0;display:inline-block;"><strong>متغیر خارج‌شونده:</strong> $${varNames[minRatioObj.bVar]}$</div>`;
+                html += '</div></div>';
+                
+                // Update Basis
+                const leavingIdx = minRatioObj.idx;
+                const oldBasisVar = basis[leavingIdx];
+                basis[leavingIdx] = enterGlobalIdx;
+                
+                html += '<div class="step-box">';
+                html += '<div class="step-title"><span class="step-number">۸</span>به‌روزرسانی پایه</div>';
+                html += '<div style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:15px;margin:15px 0;">';
+                html += `<div style="border:2px solid #e74c3c;background-color:#ffe6e6;padding:12px 20px;border-radius:8px;min-width:150px;text-align:center;"><strong>خروج:</strong> <span class="leaving-var" style="font-size:1.2rem;margin-right:8px;">$${varNames[oldBasisVar]}$</span></div>`;
+                html += '<div style="font-size:1.5rem;">⇄</div>';
+                html += `<div style="border:2px solid #27ae60;background-color:#d5f4e6;padding:12px 20px;border-radius:8px;min-width:150px;text-align:center;"><strong>ورود:</strong> <span class="entering-var" style="font-size:1.2rem;margin-right:8px;">$${varNames[enterGlobalIdx]}$</span></div>`;
+                html += '</div>';
+                html += '<p class="explanation-text"><strong>پایه جدید:</strong> $\\{' + basis.map(i => varNames[i]).join(', ') + '\\}$</p>';
+                html += '</div>';
+                
+                // Current Z
+                html += '<div class="step-box">';
+                html += '<div class="step-title">مقدار فعلی تابع هدف</div>';
+                html += `<div class="math-block highlight">$$Z = ${formatNum(Z_curr)}$$</div>`;
+                html += '</div>';
+                
+                html += '</div>'; // end derivation-page
+            }
+            
+            // ========== Final Result ==========
+            if (optimal && !infeasible) {
+                const B_final = extractCols(A, basis);
+                const B_inv_final = math.inv(B_final);
+                const X_B_final = math.multiply(B_inv_final, b);
+                const C_B_final = basis.map(j => c[j]);
+                let Z_final = math.dot(C_B_final, X_B_final);
+                if (isMin) Z_final = -Z_final;
+                
+                const solution = new Array(numVars).fill(0);
+                for (let i = 0; i < basis.length; i++) {
+                    if (basis[i] < numVars) solution[basis[i]] = X_B_final[i];
+                }
+                
+                html += '<div class="result-box">';
+                html += '<h3>✅ جواب بهینه یافت شد!</h3>';
+                html += `<div class="result-value">$$Z^* = ${formatNum(Z_final)}$$</div>`;
+                html += '<div class="result-vars">';
+                for (let j = 0; j < numVars; j++) {
+                    html += `<span class="result-var">$x_{${j+1}}^* = ${formatNum(solution[j])}$</span>`;
+                }
+                html += '</div></div>';
+                
+                // Final Summary Table
+                html += '<div class="derivation-page">';
+                html += '<div class="iteration-header"><h3>📊 خلاصه نهایی</h3></div>';
+                html += '<div class="step-box">';
+                html += '<div class="matrices-row">';
+                html += `<div class="matrix-box"><div class="matrix-label">ماتریس پایه نهایی $B^*$</div>$$${mat2latex(B_final)}$$</div>`;
+                html += `<div class="matrix-box"><div class="matrix-label">$\\left(B^*\\right)^{-1}$</div>$$${mat2latex(B_inv_final)}$$</div>`;
+                html += '</div>';
+                
+                html += '<table class="ratio-table"><thead><tr><th>متغیر</th><th>مقدار بهینه</th></tr></thead><tbody>';
+                for (let j = 0; j < numVars; j++) {
+                    html += `<tr><td>$x_{${j+1}}$</td><td>$${formatNum(solution[j])}$</td></tr>`;
+                }
+                html += `<tr class="selected"><td><strong>$Z^*$</strong></td><td><strong>$${formatNum(Z_final)}$</strong></td></tr>`;
+                html += '</tbody></table>';
+                
+                html += `<p class="explanation-text text-center mt-3"><strong>تعداد تکرارها:</strong> ${iter} | <strong>پایه نهایی:</strong> $\\{${basis.map(i => varNames[i]).join(', ')}\\}$</p>`;
+                html += '</div></div>';
+                
+            } else if (unbounded) {
+                html += '<div class="result-box unbounded-box">';
+                html += '<h3>⚠️ مسئله نامحدود است!</h3>';
+                html += '<p>تابع هدف می‌تواند به‌طور نامحدود افزایش یابد.</p>';
+                html += '</div>';
+            } else if (infeasible) {
+                html += '<div class="result-box infeasible-box">';
+                html += '<h3>⚠️ مسئله نشدنی است!</h3>';
+                html += '<p>ناحیه شدنی وجود ندارد.</p>';
+                html += '</div>';
+            } else {
+                html += '<div class="alert alert-warning">الگوریتم پس از ' + maxIter + ' تکرار متوقف شد.</div>';
+            }
+            
+            return html;
+        }
+    </script>
+    
+    <footer style="margin-top:60px;padding:30px;text-align:center;background-color:#f8f9fa;border-top:1px solid #dee2e6;font-size:0.95rem;color:#666;">
+        <p style="margin:0;"><strong>حل‌کننده روش Revised Simplex</strong></p>
+        <p style="margin:8px 0 0 0;">توسعه داده شده توسط <strong>A.H.M</strong></p>
+    </footer>
+</body>
+</html>
