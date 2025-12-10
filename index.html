@@ -530,7 +530,22 @@
     <script>
         // ==================== Constants ====================
         const EPSILON = 1e-9;
-        const M_VALUE = 1000000;  // عدد بزرگ M برای جریمه متؾیرهای مصنوعی
+        const M_VALUE = 2000;  // عدد بزرگ M برای جریمه متغیرهای مصنوعی (کاهش یافته برای دقت عددی)
+
+        // ==================== Persian/Arabic Number Conversion ====================
+        function persianToEnglish(str) {
+            if (!str) return str;
+            const persianNumbers = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+            const arabicNumbers = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            const englishNumbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            
+            let result = str.toString();
+            for (let i = 0; i < 10; i++) {
+                result = result.replace(new RegExp(persianNumbers[i], 'g'), englishNumbers[i]);
+                result = result.replace(new RegExp(arabicNumbers[i], 'g'), englishNumbers[i]);
+            }
+            return result;
+        }
 
         // ==================== Helper Functions ====================
         function formatNum(num, precision = 4) {
@@ -550,34 +565,33 @@
 
             if (Math.abs(num) < EPSILON) return "0";
 
-            // Smart Big-M rendering - همیشه اعداد بزرگ را به‌صورت M نمایش بده
+            // Smart Big-M rendering with improved precision handling
             const m = M_VALUE;
             const absNum = Math.abs(num);
             
-            // اگر عدد بزرگتر از نصف M است، حتما شامل M است
-            if (absNum > m * 0.5) {
+            // Detect if number contains M component (threshold: 1000)
+            if (absNum >= 1000) {
+                // Calculate k coefficient more accurately
                 const kFloat = num / m;
                 const k = Math.round(kFloat);
                 const remainder = num - k * m;
                 const absRemainder = Math.abs(remainder);
                 
-                // اگر باقیمانده خیلی کوچک است
-                if (absRemainder < m * 0.01) {
+                // If remainder is negligible (< 0.1)
+                if (absRemainder < 0.1) {
                     if (k === 1) return "M";
                     if (k === -1) return "-M";
                     return k + "M";
                 }
                 
-                // اگر باقیمانده قابل نمایش است
-                if (absRemainder < m * 0.5) {
-                    const base = k === 1 ? "M" : (k === -1 ? "-M" : k + "M");
-                    const remStr = basicFormat(Math.abs(remainder));
-                    const sign = remainder > 0 ? " + " : " - ";
-                    return base + sign + remStr;
-                }
+                // Display k*M + remainder format
+                const base = k === 1 ? "M" : (k === -1 ? "-M" : k + "M");
+                const remStr = basicFormat(Math.abs(remainder));
+                const sign = remainder > 0 ? " + " : " - ";
+                return base + sign + remStr;
             }
 
-            // در غیر این صورت، عدد معمولی است
+            // Regular number (no M component)
             return basicFormat(num);
         }
 
@@ -626,7 +640,7 @@
             objHTML += `<th>${optType === 'max' ? 'Max' : 'Min'} Z =</th>`;
             for (let j = 0; j < numVars; j++) objHTML += `<th>x<sub>${j+1}</sub></th>`;
             objHTML += '</tr><tr><td></td>';
-            for (let j = 0; j < numVars; j++) objHTML += `<td><input type="number" step="any" id="c_${j}" value="0"></td>`;
+            for (let j = 0; j < numVars; j++) objHTML += `<td><input type="text" id="c_${j}" value="0" class="num-input"></td>`;
             objHTML += '</tr></table>';
             document.getElementById('objectiveTable').innerHTML = objHTML;
 
@@ -635,14 +649,25 @@
             conHTML += '<th>نوع</th><th>b</th></tr>';
             for (let i = 0; i < numConstraints; i++) {
                 conHTML += `<tr><td>${i+1}</td>`;
-                for (let j = 0; j < numVars; j++) conHTML += `<td><input type="number" step="any" id="a_${i}_${j}" value="0"></td>`;
+                for (let j = 0; j < numVars; j++) conHTML += `<td><input type="text" id="a_${i}_${j}" value="0" class="num-input"></td>`;
                 conHTML += `<td><select id="sign_${i}"><option value="le">≤</option><option value="ge">≥</option><option value="eq">=</option></select></td>`;
-                conHTML += `<td><input type="number" step="any" id="b_${i}" value="0"></td></tr>`;
+                conHTML += `<td><input type="text" id="b_${i}" value="0" class="num-input"></td></tr>`;
             }
             conHTML += '</table>';
             document.getElementById('constraintsTable').innerHTML = conHTML;
             document.getElementById('inputCard').style.display = 'block';
             document.getElementById('resultsSection').innerHTML = '';
+            
+            // Add Persian number conversion to all number inputs
+            document.querySelectorAll('.num-input').forEach(input => {
+                input.addEventListener('input', function(e) {
+                    const cursorPos = this.selectionStart;
+                    const originalLength = this.value.length;
+                    this.value = persianToEnglish(this.value);
+                    const newLength = this.value.length;
+                    this.selectionStart = this.selectionEnd = cursorPos + (newLength - originalLength);
+                });
+            });
         }
 
         function loadExample1() {
@@ -714,16 +739,23 @@
         function runRevisedSimplex() {
             let html = '';
             
-            // Read inputs
+            // Read inputs (convert Persian/Arabic numbers to English)
             const c_orig = [];
-            for (let j = 0; j < numVars; j++) c_orig.push(parseFloat(document.getElementById(`c_${j}`).value) || 0);
+            for (let j = 0; j < numVars; j++) {
+                const val = persianToEnglish(document.getElementById(`c_${j}`).value);
+                c_orig.push(parseFloat(val) || 0);
+            }
             
             const A_orig = [], b_orig = [], signs = [];
             for (let i = 0; i < numConstraints; i++) {
                 const row = [];
-                for (let j = 0; j < numVars; j++) row.push(parseFloat(document.getElementById(`a_${i}_${j}`).value) || 0);
+                for (let j = 0; j < numVars; j++) {
+                    const val = persianToEnglish(document.getElementById(`a_${i}_${j}`).value);
+                    row.push(parseFloat(val) || 0);
+                }
                 A_orig.push(row);
-                b_orig.push(parseFloat(document.getElementById(`b_${i}`).value) || 0);
+                const bVal = persianToEnglish(document.getElementById(`b_${i}`).value);
+                b_orig.push(parseFloat(bVal) || 0);
                 signs.push(document.getElementById(`sign_${i}`).value);
             }
 
@@ -818,7 +850,7 @@
                 html += '<strong>💡 چرا روش M بزرگ؟</strong><br>';
                 html += `<strong>1. مشکل:</strong> برای محدودیت‌های ≥ و = نمی‌توانیم مستقیماً پایه اولیه پیدا کنیم.<br>`;
                 html += `<strong>2. حل:</strong> متغیرهای مصنوعی ($a_i$) اضافه می‌کنیم تا پایه اولیه داشته باشیم.<br>`;
-                html += `<strong>3. ضریب -M:</strong> به این متغیرها ضریب $-M$ (در تابع هدف) می‌دهیم که M = ${M_VALUE.toLocaleString()} عددی بسیار بزرگ است.<br>`;
+                html += `<strong>3. ضریب -M:</strong> به این متغیرها ضریب $-M$ (در تابع هدف) می‌دهیم که M = ${M_VALUE.toLocaleString()} عدد به اندازه کافی بزرگ است.<br>`;
                 html += '<strong>4. چرا بزرگ؟</strong> چون می‌خواهیم به الگوریتم بگوییم: "به هر قیمتی شده این متغیرها را صفر کن!"<br>';
                 html += '<strong>5. نتیجه:</strong> اگر در جواب نهایی $a_i > 0$ باشد → مسئله <strong>ناممکن (Infeasible)</strong> است چون حتی با جریمه سنگین هم نتوانستیم آنها را حذف کنیم.';
                 html += '</div>';
@@ -920,9 +952,9 @@
                 // توضیح اعداد بزرگ M
                 if (artificialCnt > 0 && iter === 1) {
                     html += '<div style="background:#e3f2fd;border-right:4px solid #2196f3;padding:12px;margin:10px 0;border-radius:5px;font-size:0.95rem;">';
-                    html += `<strong>ℹ️ درباره اعداد بزرگ (${M_VALUE.toLocaleString()}):</strong><br>`;
-                    html += 'این اعداد مربوط به ضریب M در متغیرهای مصنوعی هستند. ';
-                    html += 'برای مثال اگر $C_B = [-1000000, 0]$ ببینید، یعنی متغیر مصنوعی در پایه است. ';
+                    html += `<strong>ℹ️ درباره ضریب M (${M_VALUE.toLocaleString()}):</strong><br>`;
+                    html += 'این عدد ضریب جریمه برای متغیرهای مصنوعی است. ';
+                    html += 'برای مثال اگر $C_B = [-2000, 0]$ یا $-M$ ببینید، یعنی متغیر مصنوعی در پایه است. '
                     html += '<strong>هدف:</strong> الگوریتم با دیدن این عدد منفی بزرگ، سریعاً متغیر دیگری را وارد پایه می‌کند تا Z را بهبود ببخشد.';
                     html += '</div>';
                 }
